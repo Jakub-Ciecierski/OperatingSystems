@@ -1,0 +1,44 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
+#include <stdlib.h>
+
+pid_t pid;
+
+void sendSig(pid_t id,int sig)
+{
+	if(sig==1)
+	{	
+		kill(id,SIGUSR1);
+		printf("signal: SIGUSR1 sent to: %d \n",id);
+	}		
+	if(sig==2)
+	{
+		kill(id,SIGUSR2);
+		printf("signal: SIGUSR2 sent to: %d \n",id);
+	}
+	if(sig==3)
+		kill(id,SIGINT);
+}
+
+void runTerminal()
+{
+	printf("Insert the procces id and signal you want to send\n");
+
+	printf("PID: ");	
+	scanf("%d",&pid);
+	
+	printf("User signal 1 or 2. Sigint 3 ");
+	int sig;
+	scanf("%d",&sig);
+
+	sendSig(pid,sig);
+}
+
+int main()
+{
+	pid = -1;
+	while(true)
+		runTerminal();
+	return 0;
+}

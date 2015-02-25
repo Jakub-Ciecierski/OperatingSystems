@@ -1,0 +1,178 @@
+2.1
+/* One semid data structure for each set of semaphores in the system. */
+        struct semid_ds {
+                struct ipc_perm sem_perm;       /* permissions .. see ipc.h */
+                time_t          sem_otime;      /* last semop time */
+                time_t          sem_ctime;      /* last change time */
+                struct sem      *sem_base;      /* ptr to first semaphore in array */
+                struct wait_queue *eventn;
+                struct wait_queue *eventz;
+                struct sem_undo  *undo;         /* undo requests on this array */
+                ushort          sem_nsems;      /* no. of semaphores in array */
+        };
+        
+sem_perm
+
+    This is an instance of the ipc_perm structure, which is defined for us in linux/ipc.h. This holds the permission information for the semaphore set, including the access permissions, and information about the creator of the set (uid, etc).
+
+sem_otime
+
+    Time of the last semop() operation (more on this in a moment)
+
+sem_ctime
+
+    Time of the last change to this structure (mode change, etc)
+
+sem_base
+
+    Pointer to the first semaphore in the array (see next structure)
+
+sem_undo
+
+    Number of undo requests in this array (more on this in a moment)
+
+sem_nsems 
+
+
+2.2
+ /* One semaphore structure for each semaphore in the system. */
+        struct sem {
+                short   sempid;         /* pid of last operation */
+                ushort  semval;         /* current value */
+                ushort  semncnt;        /* num procs awaiting increase in semval */
+                ushort  semzcnt;        /* num procs awaiting semval = 0 */
+        };
+        
+
+2.3
+  SYSTEM CALL: semget();                                                          
+
+  PROTOTYPE: int semget ( key_t key, int nsems, int semflg );                                             
+    RETURNS: semaphore set IPC identifier on success
+             -1 on error: errno = EACCESS (permission denied)
+                                  EEXIST (set exists, cannot create (IPC_EXCL))
+                                  EIDRM (set is marked for deletion)
+                                  ENOENT (set does not exist, no IPC_CREAT was used)
+                                  ENOMEM (Not enough memory to create new set)
+                                  ENOSPC (Maximum set limit exceeded)
+                                  
+                                  
+IPC_CREAT
+
+    Create the semaphore set if it doesn't already exist in the kernel.
+
+IPC_EXCL
+
+    When used with IPC_CREAT, fail if semaphore set already exists. 
+
+2.4
+ SYSTEM CALL: semop();                                                          
+  PROTOTYPE: int semop ( int semid, struct sembuf *sops, unsigned nsops);
+    RETURNS: 0 on success (all operations performed)
+             -1 on error: errno = E2BIG (nsops greater than max number of ops allowed atomically)
+                                  EACCESS (permission denied)
+                                  EAGAIN (IPC_NOWAIT asserted, operation could not go through)
+                                  EFAULT (invalid address pointed to by sops argument)
+                                  EIDRM (semaphore set was removed)
+                                  EINTR (Signal received while sleeping)
+                                  EINVAL (set doesn't exist, or semid is invalid)
+                                  ENOMEM (SEM_UNDO asserted, not enough memory to create the
+                                          undo structure necessary)
+                                  ERANGE (semaphore value out of range)
+
+                                 
+/* semop system call takes an array of these */
+        struct sembuf {
+                ushort  sem_num;        /* semaphore index in array */
+                short   sem_op;         /* semaphore operation */
+                short   sem_flg;        /* operation flags */
+        };
+        
+sem_num
+
+    The number of the semaphore you wish to deal with
+
+sem_op
+
+    The operation to perform (positive, negative, or zero)
+
+sem_flg
+
+    Operational flags 
+    
+    
+2.5
+
+  SYSTEM CALL: semctl();                                                          
+  PROTOTYPE: int semctl ( int semid, int semnum, int cmd, union semun arg );
+    RETURNS: positive integer on success 
+             -1 on error: errno = EACCESS (permission denied)
+                                  EFAULT (invalid address pointed to by arg argument)
+                                  EIDRM (semaphore set was removed)
+                                  EINVAL (set doesn't exist, or semid is invalid)
+                                  EPERM (EUID has no privileges for cmd in arg)
+                                  ERANGE (semaphore value out of range)
+                                  
+IPC_STAT
+
+    Retrieves the semid_ds structure for a set, and stores it in the address of the buf argument in the semun union.
+
+IPC_SET
+
+    Sets the value of the ipc_perm member of the semid_ds structure for a set. Takes the values from the buf argument of the semun union.
+
+IPC_RMID
+
+    Removes the set from the kernel.
+
+GETALL
+
+    Used to obtain the values of all semaphores in a set. The integer values are stored in an array of unsigned short integers pointed to by the array member of the union.
+
+GETNCNT
+
+    Returns the number of processes currently waiting for resources.
+
+GETPID
+
+    Returns the PID of the process which performed the last semop call.
+
+GETVAL
+
+    Returns the value of a single semaphore within the set.
+
+GETZCNT
+
+    Returns the number of processes currently waiting for 100% resource utilization.
+
+SETALL
+
+    Sets all semaphore values with a set to the matching values contained in the array member of the union.
+
+SETVAL
+
+
+
+Sets the value of an individual semaphore within the set to the val member of the union. 
+    
+         /* arg for semctl system calls. */
+        union semun {
+                int val;                /* value for SETVAL */
+                struct semid_ds *buf;   /* buffer for IPC_STAT & IPC_SET */
+                ushort *array;          /* array for GETALL & SETALL */
+                struct seminfo *__buf;  /* buffer for IPC_INFO */
+                void *__pad;
+        };
+
+val
+
+    Used when the SETVAL command is performed. Specifies the value to set the semaphore to.
+
+buf
+
+    Used in the IPC_STAT/IPC_SET commands. Represents a copy of the internal semaphore data structure used in the kernel.
+
+array
+
+    A pointer used in the GETALL/SETALL commands. Should point to an array of integer values to be
+    used in setting or retrieving all semaphore values in a set. 

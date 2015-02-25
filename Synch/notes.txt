@@ -1,0 +1,172 @@
+ipcs -q 	msg queues
+ipcs -s 	semaphore
+ipcs -m 	shared memory
+
+ipcrm <msg | sem | shm>  <IPC ID>
+
+
+
+
+1 Message queues:
+(Defined in linux/msg.h)
+
+Message queues can be best described as an internal linked list within the kernel's addressing space. 
+Messages can be sent to the queue in order and retrieved from the queue in several different ways. 
+Each message queue (of course) is uniquely identified by an IPC identifier. 
+
+1.1 Message buffer:
+Template for message data
+
+/* message buffer for msgsnd and msgrcv calls */
+struct msgbuf {
+    long mtype;         /* type of message */
+    char mtext[1];      /* message text */
+};
+
+mtype
+    The message type, represented in a positive number. This must be a positive number!
+    
+mtext
+    The message data itself. 
+    
+    
+1.2 Kernel msg structure:
+
+/* one msg structure for each message */
+struct msg {
+    struct msg *msg_next;   /* next message on queue */
+    long  msg_type;          
+    char *msg_spot;         /* message text address */
+    short msg_ts;           /* message text size */
+};
+
+msg_next
+
+    This is a pointer to the next message in the queue. They are stored as a singly linked list within kernel addressing space.
+
+msg_type
+
+    This is the message type, as assigned in the user structure msgbuf.
+
+msg_spot
+
+    A pointer to the beginning of the message body.
+
+msg_ts
+
+    The length of the message text, or body. 
+
+
+1.3 msqid_ds
+/* one msqid structure for each queue on the system */
+struct msqid_ds {
+    struct ipc_perm msg_perm;
+    struct msg *msg_first;  /* first message on queue */
+    struct msg *msg_last;   /* last message in queue */
+    time_t msg_stime;       /* last msgsnd time */
+    time_t msg_rtime;       /* last msgrcv time */
+    time_t msg_ctime;       /* last change time */
+    struct wait_queue *wwait;
+    struct wait_queue *rwait;
+    ushort msg_cbytes;    
+    ushort msg_qnum;     
+    ushort msg_qbytes;      /* max number of bytes on queue */
+    ushort msg_lspid;       /* pid of last msgsnd */
+    ushort msg_lrpid;       /* last receive pid */
+};
+
+1.4
+struct ipc_perm
+{
+  key_t  key;
+  ushort uid;   /* owner euid and egid */
+  ushort gid;
+  ushort cuid;  /* creator euid and egid */
+  ushort cgid;
+  ushort mode;  /* access modes see mode flags below */
+  ushort seq;   /* slot usage sequence number */
+};
+
+1.5
+SYSTEM CALL: msgget();                                                          
+
+  PROTOTYPE: int msgget ( key_t key, int msgflg );                                             
+    RETURNS: message queue identifier on success                                                       
+             -1 on error: errno = EACCESS (permission denied)
+                                  EEXIST (Queue exists, cannot create)
+                                  EIDRM (Queue is marked for deletion)
+                                  ENOENT (Queue does not exist)
+                                  ENOMEM (Not enough memory to create queue)
+                                  ENOSPC (Maximum queue limit exceeded)
+                                  
+msgflg:
+ 
+IPC_CREAT
+
+    Create the queue if it doesn't already exist in the kernel.
+
+IPC_EXCL
+
+    When used with IPC_CREAT, fail if queue already exists. 
+    
+    
+1.6
+ SYSTEM CALL: msgsnd();                                                          
+
+  PROTOTYPE: int msgsnd ( int msqid, struct msgbuf *msgp, int msgsz, int msgflg );
+    RETURNS: 0 on success
+             -1 on error: errno = EAGAIN (queue is full, and IPC_NOWAIT was asserted)
+                                  EACCES (permission denied, no write permission)
+                                  EFAULT (msgp address isn't accessable - invalid)
+                                  EIDRM  (The message queue has been removed)
+                                  EINTR  (Received a signal while waiting to write)
+                                  EINVAL (Invalid message queue identifier, nonpositive
+                                          message type, or invalid message size) 
+                                  ENOMEM (Not enough memory to copy message buffer)
+                                  
+msgflg:
+IPC_NOWAIT
+
+If the message queue is full, then the message is not written to the queue, 
+and control is returned to the calling process.
+If not specified, then the calling process will suspend (block) until the message can be written
+
+
+1.7
+  SYSTEM CALL: msgrcv();                                                          
+  PROTOTYPE: int msgrcv ( int msqid, struct msgbuf *msgp, int msgsz, long mtype, int msgflg );
+    RETURNS: Number of bytes copied into message buffer
+             -1 on error: errno = E2BIG  (Message length is greater than msgsz, no MSG_NOERROR)
+                                  EACCES (No read permission)
+                                  EFAULT (Address pointed to by msgp is invalid)
+                                  EIDRM  (Queue was removed during retrieval)
+                                  EINTR  (Interrupted by arriving signal)
+                                  EINVAL (msgqid invalid, or msgsz less than 0)
+                                  ENOMSG (IPC_NOWAIT asserted, and no message exists
+                                          in the queue to satisfy the request) 
+
+1.8
+
+  SYSTEM CALL: msgctl();
+  PROTOTYPE: int msgctl ( int msgqid, int cmd, struct msqid_ds *buf );
+    RETURNS: 0 on success
+             -1 on error: errno = EACCES (No read permission and cmd is IPC_STAT)
+                                  EFAULT (Address pointed to by buf is invalid with IPC_SET and
+                                          IPC_STAT commands)
+                                  EIDRM  (Queue was removed during retrieval)
+                                  EINVAL (msgqid invalid, or msgsz less than 0)
+                                  EPERM  (IPC_SET or IPC_RMID command was issued, but
+                                          calling process does not have write (alter)
+                                          access to the queue)
+                                          
+IPC_STAT
+
+    Retrieves the msqid_ds structure for a queue, and stores it in the address of the buf argument.
+
+IPC_SET
+
+    Sets the value of the ipc_perm member of the msqid_ds structure for a queue. Takes the values from the buf argument.
+
+IPC_RMID
+
+    Removes the queue from the kernel. 

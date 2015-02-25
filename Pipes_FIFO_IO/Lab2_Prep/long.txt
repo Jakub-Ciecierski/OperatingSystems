@@ -1,0 +1,3503 @@
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
+#include "packet.h"
+
+volatile sig_atomic_t _continue = 1;
+
+void set_sig_handler(int signum,void(*handler)(int))
+{
+	struct sigaction sa;
+	memset(&sa,0x00,sizeof(struct sigaction));
+	
+	sa.sa_handler = handler;
+	if(-1==sigaction(signum,&sa,NULL))
+		printf("Error with signal : %d",signum);		
+}
+
+void sigint_handler(int sigint)
+{
+	printf("SIGINT received\n");
+	_continue = 0;
+}
+
+void usage (char* info)
+{
+	printf("%s usage:\n",info);
+	printf("%s fifo filtering_cmd\n",info);
+}
+
+void filter_process()
+{
+	
+}
+
+void run_read (int fifo,const char* FILT_CMD)
+{
+	int n;
+	PACKET buffer;
+	char* msg;
+	char* output_file;
+	while(_continue == 1)
+	{
+		do
+		{
+			if( (n = read(fifo, (void*)&buffer, PIPE_BUF)) > 0)
+			{
+				/*
+				if( sprintf(output_file, "%d", buffer.header.pid) != 1)
+				{		
+					perror("sprintf");
+					exit(EXIT_FAILURE);
+				}
+				*/	
+				switch(fork())
+				{	
+					case -1: perror("fork"); exit(4);
+					case 0: filter_process();
+						exit(0);
+					default:break;
+				}
+		
+				// printing to stdout for now..
+				printf("PID:--------------------%s",buffer.header.pid);
+				write(1, buffer.msg, sizeof(buffer.msg));
+				printf("bytes read: %d\n",n);
+				sleep(1);
+			}
+			if(n<0)
+			{
+				perror("read()");
+				exit(EXIT_FAILURE);
+			}
+		}while(n == PIPE_BUF);
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc !=3)
+	{
+		usage(argv[0]);
+		return 0;
+	}
+	
+	// set sigint handler for shutdown
+	set_sig_handler(SIGINT, sigint_handler);
+	
+	const char* MY_FIFO = argv[1];
+	const char* FILT_CMD = argv[2];
+	int fifo;
+	
+	printf("unlinking the fifo...\n");
+	(void)unlink(MY_FIFO);
+	
+	printf("mkfifo...\n");
+	if( mkfifo(MY_FIFO, 0666))
+		return 1;
+	
+	printf("opening fifo file \n");
+	if ( (fifo = open(MY_FIFO, O_RDONLY) ) < 0)
+	{
+		fprintf(stderr,"error with opening WR_FIFO\n");
+		return 1;
+	}
+	printf("FIFO opened\n");
+	run_read(fifo, FILT_CMD);
+	
+	close(fifo);
+	return 0;
+}
